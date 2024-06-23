@@ -12,15 +12,21 @@ export class AuthService {
     private readonly jwtService: JwtService
   ) {}
 
-  async signup(signupDto: SignUpDto): Promise<{token: string}> {
+  async signup(signupDto: SignUpDto): Promise<{token: string, id: string}> {
+    const user = await this.usersService.findOne(signupDto.email);
+
+    if (user) {
+      throw new UnauthorizedException('Email already exists');
+    }
+
     const createdUser = await this.usersService.create(signupDto);
 
     const token = this.jwtService.sign({id: createdUser._id})
 
-    return { token }
+    return { token, id: createdUser._id as string }
   }
 
-  async login(loginDto: LoginDto): Promise<{token: string}> {
+  async login(loginDto: LoginDto): Promise<{token: string, id: string}> {
     const { email, password } = loginDto;
 
     const user = await this.usersService.findOne(email);
@@ -37,7 +43,7 @@ export class AuthService {
 
     const token = this.jwtService.sign({id: user._id})
 
-    return { token }
+    return { token, id: user._id as string }
   }
 
 }
